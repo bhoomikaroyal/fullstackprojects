@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CampusEvents</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins', sans-serif;
+}
+
+body{
+    background:#f4f6fb;
+}
+
+/* NAVBAR */
+.navbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:16px 8%;
+    background:#ffffff;
+    box-shadow:0 1px 6px rgba(0,0,0,0.05);
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-size:18px;
+    font-weight:700;
+    color:#1e293b;
+}
+
+.logo-box{
+    background:#2b7de9;
+    padding:10px 12px;
+    border-radius:12px;
+    color:white;
+    font-size:16px;
+}
+
+.logo span{
+    color:#2b7de9;
+}
+
+.nav-center{
+    display:flex;
+    gap:26px;
+}
+
+.nav-center a{
+    text-decoration:none;
+    color:#64748b;
+    font-size:15px;
+    font-weight:500;
+    padding:8px 16px;
+    border-radius:20px;
+}
+
+.nav-center a.active{
+    background:#e7efff;
+    color:#2b7de9;
+}
+
+.nav-right{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    font-size:15px;
+}
+
+.signup{
+    background:#2b7de9;
+    color:white;
+    padding:8px 18px;
+    border-radius:22px;
+}
+
+/* HERO */
+.hero{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:80px 8%;
+    gap:60px;
+}
+
+/* Badge */
+.badge{
+    background:#e7efff;
+    color:#2b7de9;
+    padding:8px 16px;
+    border-radius:22px;
+    font-size:14px;
+    display:inline-block;
+    margin-bottom:24px;
+}
+
+/* Heading */
+.hero-text h1{
+    font-size:58px;  /* Exact adjusted size */
+    font-weight:800;
+    line-height:1.05;
+    color:#0f172a;
+}
+
+.hero-text h1 span{
+    color:#2b7de9;
+}
+
+/* Paragraph */
+.hero-text p{
+    margin:24px 0;
+    font-size:17px;
+    color:#64748b;
+    line-height:1.6;
+    max-width:520px;
+}
+
+/* Buttons */
+.buttons{
+    display:flex;
+    gap:18px;
+}
+
+.primary{
+    background:#2b7de9;
+    color:white;
+    padding:14px 28px;
+    border-radius:28px;
+    font-weight:500;
+    font-size:15px;
+}
+
+.secondary{
+    border:1px solid #cbd5e1;
+    padding:14px 28px;
+    border-radius:28px;
+    font-weight:500;
+    font-size:15px;
+    background:white;
+}
+
+/* IMAGE SECTION */
+.hero-image{
+    position:relative;
+}
+
+.image-card{
+    background:#ffffff;
+    padding:20px;
+    border-radius:22px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.08);
+}
+
+.image-card img{
+    width:640px;   /* Increased to match screenshot */
+    height:420px;  /* Fixed height like screenshot */
+    object-fit:cover;
+    border-radius:16px;
+}
+
+/* Floating Shapes */
+.shape1{
+    position:absolute;
+    width:110px;
+    height:110px;
+    background:#93c5fd;
+    border-radius:22px;
+    top:-30px;
+    right:-30px;
+    opacity:0.6;
+}
+
+.shape2{
+    position:absolute;
+    width:110px;
+    height:110px;
+    background:#bfdbfe;
+    border-radius:22px;
+    bottom:-40px;
+    left:-40px;
+    opacity:0.6;
+}
+
+/* STATS */
+.stats{
+    display:flex;
+    gap:70px;
+    padding:40px 8%;
+}
+
+.stat h2{
+    color:#2b7de9;
+    font-size:32px;
+    font-weight:700;
+}
+
+.stat p{
+    color:#64748b;
+    font-size:14px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+    <div class="logo">
+        <div class="logo-box">🎓</div>
+        Campus<span>Events</span>
+    </div>
+
+    <div class="nav-center">
+        <a href="#" class="active">Home</a>
+        <a href="#">Events</a>
+        <a href="#">Register</a>
+        <a href="#">Contact</a>
+    </div>
+
+    <div class="nav-right">
+        <div>Log In</div>
+        <div class="signup">Sign Up</div>
+    </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-text">
+        <div class="badge">✨ Spring 2026 Events are Live!</div>
+
+        <h1>
+            Discover &<br>
+            Register for<br>
+            <span>Campus Events</span><br>
+            Easily
+        </h1>
+
+        <p>
+            Workshops, Seminars, Hackathons & Cultural Events – All
+            in One Place. Never miss an opportunity to learn and grow.
+        </p>
+
+        <div class="buttons">
+            <div class="primary">Browse Events →</div>
+            <div class="secondary">Register Now</div>
+        </div>
+    </div>
+
+    <div class="hero-image">
+        <div class="shape1"></div>
+        <div class="shape2"></div>
+        <div class="image-card">
+            <img src="image.1.jpg">
+        </div>
+    </div>
+</section>
+
+<section class="stats">
+    <div class="stat">
+        <h2>50+</h2>
+        <p>Events</p>
+    </div>
+    <div class="stat">
+        <h2>2000+</h2>
+        <p>Students</p>
+    </div>
+    <div class="stat">
+        <h2>15+</h2>
+        <p>Clubs</p>
+    </div>
+</section>
+
+</body>
+</html>

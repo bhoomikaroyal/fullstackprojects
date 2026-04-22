@@ -1,0 +1,156 @@
+<!-- Admin Section -->
+      <section id="admin-section" class="pt-28 pb-20 px-6 hidden">
+        <div class="max-w-7xl mx-auto">
+          <h1 class="text-4xl font-bold mb-8">Admin Dashboard</h1>
+          
+          <!-- Admin Stats -->
+          <div class="grid md:grid-cols-4 gap-6 mb-8">
+            <div class="glass-card p-6">
+              <div class="text-3xl font-bold text-[var(--accent)] mb-1">24</div>
+              <div class="text-sm text-[var(--muted)]">Total Events</div>
+            </div>
+            <div class="glass-card p-6">
+              <div class="text-3xl font-bold text-[var(--accent)] mb-1" id="total-registrations">0</div>
+              <div class="text-sm text-[var(--muted)]">Total Registrations</div>
+            </div>
+            <div class="glass-card p-6">
+              <div class="text-3xl font-bold text-[var(--accent)] mb-1">142</div>
+              <div class="text-sm text-[var(--muted)]">Active Users</div>
+            </div>
+            <div class="glass-card p-6">
+              <div class="text-3xl font-bold text-[var(--accent)] mb-1">12</div>
+              <div class="text-sm text-[var(--muted)]">This Month</div>
+            </div>
+          </div>
+          
+          <!-- Create Event Form -->
+          <div class="glass-card p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-6">Create New Event</h2>
+            <form id="create-event-form" class="grid md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium mb-2 text-[var(--muted)]">Event Name</label>
+                <input type="text" id="event-name" class="input-field" placeholder="Enter event name" required>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2 text-[var(--muted)]">Category</label>
+                <select id="event-category" class="input-field" required>
+                  <option value="">Select category</option>
+                  <option value="technical">Technical</option>
+                  <option value="cultural">Cultural</option>
+                  <option value="workshop">Workshop</option>
+                  <option value="seminar">Seminar</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2 text-[var(--muted)]">Date</label>
+                <input type="date" id="event-date" class="input-field" required>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2 text-[var(--muted)]">Time</label>
+                <input type="time" id="event-time" class="input-field" required>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2 text-[var(--muted)]">Venue</label>
+                <input type="text" id="event-venue" class="input-field" placeholder="Enter venue" required>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2 text-[var(--muted)]">Capacity</label>
+                <input type="number" id="event-capacity" class="input-field" placeholder="Max participants" required>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium mb-2 text-[var(--muted)]">Description</label>
+                <textarea id="event-description" class="input-field" rows="3" placeholder="Enter event description" required></textarea>
+              </div>
+              <div class="md:col-span-2">
+                <button type="submit" class="btn-primary">Create Event</button>
+              </div>
+            </form>
+          </div>
+          
+          <!-- All Registrations Table -->
+          <div class="glass-card p-8">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-2xl font-bold">All Registrations</h2>
+              <button class="btn-secondary" onclick="exportData()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inline mr-2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                </svg>
+                Export CSV
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr class="border-b border-[var(--border)]">
+                    <th class="text-left py-4 px-4 text-[var(--muted)] font-medium">Student</th>
+                    <th class="text-left py-4 px-4 text-[var(--muted)] font-medium">Event</th>
+                    <th class="text-left py-4 px-4 text-[var(--muted)] font-medium">Date</th>
+                    <th class="text-left py-4 px-4 text-[var(--muted)] font-medium">Status</th>
+                    <th class="text-left py-4 px-4 text-[var(--muted)] font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-registrations-table"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+    
+    <!-- Registration Modal -->
+    <div id="registration-modal" class="modal-overlay">
+      <div class="modal-content glass-card p-8">
+        <h2 class="text-2xl font-bold mb-2" id="modal-event-name">Event Name</h2>
+        <p class="text-[var(--muted)] mb-6" id="modal-event-details"></p>
+        
+        <form id="registration-form">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-2 text-[var(--muted)]">Full Name</label>
+              <input type="text" id="reg-name" class="input-field" placeholder="Enter your full name" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2 text-[var(--muted)]">Email</label>
+              <input type="email" id="reg-email" class="input-field" placeholder="Enter your email" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2 text-[var(--muted)]">Department</label>
+              <select id="reg-department" class="input-field" required>
+                <option value="">Select department</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Mechanical">Mechanical</option>
+                <option value="Civil">Civil</option>
+                <option value="Business">Business</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2 text-[var(--muted)]">Year</label>
+              <select id="reg-year" class="input-field" required>
+                <option value="">Select year</option>
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="flex gap-4 mt-8">
+            <button type="button" class="btn-secondary flex-1" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn-primary flex-1">Register</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Success Toast -->
+    <div id="toast" class="fixed bottom-8 right-8 glass-card p-4 flex items-center gap-3 z-50 opacity-0 transform translate-y-4 transition-all duration-300">
+      <div class="w-10 h-10 rounded-full bg-[var(--accent)] flex items-center justify-center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" stroke-width="3">
+          <path d="M20 6L9 17l-5-5"/>
+        </svg>
+      </div>
+      <span id="toast-message">Success!</span>
+    </div>
+  </div>

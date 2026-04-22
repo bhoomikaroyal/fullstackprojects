@@ -1,0 +1,678 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Event Portal | Smart Event Management</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Three.js -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-dark: #05070c;
+      --bg-card: rgba(15, 25, 35, 0.85);
+      --accent: #2dd4bf;
+      --accent-dark: #14b8a6;
+      --text-primary: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border-glow: rgba(45, 212, 191, 0.3);
+      --danger: #f43f5e;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: 'Space Grotesk', monospace;
+    }
+
+    #canvas-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Glassmorphic components */
+    .glass {
+      background: rgba(10, 20, 28, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(45, 212, 191, 0.2);
+      border-radius: 24px;
+    }
+
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(45, 212, 191, 0.25);
+      border-radius: 28px;
+      transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    }
+
+    .glass-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 35px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(45,212,191,0.2);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: #0a0f1a;
+      font-weight: 700;
+      padding: 12px 28px;
+      border-radius: 40px;
+      transition: all 0.25s ease;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(45,212,191,0.3);
+    }
+
+    .btn-primary:hover {
+      transform: scale(1.02);
+      box-shadow: 0 8px 20px rgba(45,212,191,0.5);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 10px 24px;
+      border-radius: 40px;
+      font-weight: 500;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(45,212,191,0.15);
+    }
+
+    .input-modern {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(45,212,191,0.3);
+      border-radius: 20px;
+      padding: 12px 20px;
+      color: white;
+      width: 100%;
+      transition: 0.2s;
+    }
+
+    .input-modern:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(45,212,191,0.2);
+    }
+
+    .event-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-tech { background: #2dd4bf20; color: #2dd4bf; }
+    .badge-cultural { background: #f9731620; color: #fb923c; }
+    .badge-workshop { background: #a855f720; color: #c084fc; }
+    .badge-seminar { background: #3b82f620; color: #60a5fa; }
+
+    .nav-item {
+      cursor: pointer;
+      transition: 0.2s;
+      padding: 8px 16px;
+      border-radius: 40px;
+    }
+    .nav-item:hover, .nav-item.active {
+      background: rgba(45,212,191,0.15);
+      color: var(--accent);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #1e2a3a;
+      backdrop-filter: blur(8px);
+      border-left: 4px solid var(--accent);
+      padding: 12px 24px;
+      border-radius: 16px;
+      transform: translateX(120%);
+      transition: transform 0.3s ease;
+      z-index: 200;
+    }
+    .toast.show {
+      transform: translateX(0);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      visibility: hidden;
+      opacity: 0;
+      transition: 0.2s;
+    }
+    .modal-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .modal-content {
+      max-width: 500px;
+      width: 90%;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="canvas-bg"></canvas>
+
+<div class="app-wrapper">
+  <!-- LOGIN PAGE -->
+  <div id="loginPage" class="min-h-screen flex items-center justify-center p-6">
+    <div class="glass w-full max-w-md p-8 rounded-3xl shadow-2xl">
+      <div class="text-center mb-8">
+        <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-tr from-[#2dd4bf] to-[#0f766e] flex items-center justify-center mb-4 shadow-lg">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="1.8"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        </div>
+        <h2 class="text-3xl font-bold">Campus<span class="text-[#2dd4bf]">Events</span></h2>
+        <p class="text-gray-400 mt-2">Sign in to explore & register</p>
+      </div>
+      <form id="loginForm" class="space-y-5">
+        <input type="text" id="loginUser" placeholder="Username" class="input-modern" required>
+        <input type="password" id="loginPass" placeholder="Password" class="input-modern" required>
+        <div class="flex gap-5 justify-center">
+          <label class="flex gap-2 items-center"><input type="radio" name="role" value="student" checked> <span>Student</span></label>
+          <label class="flex gap-2 items-center"><input type="radio" name="role" value="admin"> <span>Admin</span></label>
+        </div>
+        <button type="submit" class="btn-primary w-full">Enter Portal</button>
+      </form>
+      <p class="text-xs text-gray-500 text-center mt-6">Demo: any username/password works</p>
+    </div>
+  </div>
+
+  <!-- MAIN APP (after login) -->
+  <div id="mainApp" style="display: none;">
+    <!-- NAVBAR -->
+    <nav class="fixed top-0 left-0 w-full z-50 glass rounded-none border-b border-[#2dd4bf30] px-6 py-3">
+      <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-[#2dd4bf] flex items-center justify-center"><span class="font-bold text-black">CE</span></div>
+          <span class="font-bold text-xl tracking-tight">CampusEvents</span>
+        </div>
+        <div class="hidden md:flex gap-1">
+          <button class="nav-item" data-nav="home">🏠 Home</button>
+          <button class="nav-item" data-nav="events">📅 Events</button>
+          <button class="nav-item" data-nav="myreg">📋 My Registrations</button>
+          <button class="nav-item" id="adminNavBtn" style="display: none;" data-nav="admin">⚙️ Admin</button>
+        </div>
+        <div class="flex gap-3 items-center">
+          <span id="userNameSpan" class="text-sm text-[#a0f0e0]"></span>
+          <button id="logoutBtn" class="btn-secondary text-sm py-1.5 px-4">Logout</button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="pt-24 pb-12 px-6 max-w-7xl mx-auto">
+      <!-- HOME SECTION -->
+      <div id="homeSection">
+        <div class="text-center mb-14">
+          <h1 class="text-5xl md:text-7xl font-bold mb-4">Ignite Your <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#2dd4bf] to-[#14b8a6]">Campus Spirit</span></h1>
+          <p class="text-gray-400 text-xl max-w-2xl mx-auto">Register for workshops, fests, seminars, and build your network.</p>
+          <button class="btn-primary mt-8" id="exploreEventsBtn">Explore Events →</button>
+        </div>
+        <div class="grid md:grid-cols-4 gap-5 mb-16">
+          <div class="glass-card p-5 text-center"><div class="text-3xl font-bold text-[#2dd4bf]" id="statEvents">0</div><div class="text-gray-400">Active Events</div></div>
+          <div class="glass-card p-5 text-center"><div class="text-3xl font-bold text-[#2dd4bf]" id="statRegs">0</div><div class="text-gray-400">Total Registrations</div></div>
+          <div class="glass-card p-5 text-center"><div class="text-3xl font-bold text-[#2dd4bf]">6+</div><div class="text-gray-400">Categories</div></div>
+          <div class="glass-card p-5 text-center"><div class="text-3xl font-bold text-[#2dd4bf]">✨</div><div class="text-gray-400">Live Updates</div></div>
+        </div>
+        <h2 class="text-2xl font-bold mb-5">🔥 Featured Events</h2>
+        <div id="featuredGrid" class="grid md:grid-cols-3 gap-7"></div>
+      </div>
+
+      <!-- EVENTS SECTION -->
+      <div id="eventsSection" style="display: none;">
+        <div class="flex flex-wrap justify-between items-center mb-8">
+          <h2 class="text-3xl font-bold">All Events</h2>
+          <div class="flex gap-2 flex-wrap">
+            <button class="filter-chip btn-secondary text-sm py-1.5 px-4" data-cat="all">All</button>
+            <button class="filter-chip btn-secondary text-sm py-1.5 px-4" data-cat="technical">Tech</button>
+            <button class="filter-chip btn-secondary text-sm py-1.5 px-4" data-cat="cultural">Cultural</button>
+            <button class="filter-chip btn-secondary text-sm py-1.5 px-4" data-cat="workshop">Workshop</button>
+            <button class="filter-chip btn-secondary text-sm py-1.5 px-4" data-cat="seminar">Seminar</button>
+          </div>
+        </div>
+        <div id="allEventsGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-7"></div>
+      </div>
+
+      <!-- MY REGISTRATIONS SECTION -->
+      <div id="myRegSection" style="display: none;">
+        <h2 class="text-3xl font-bold mb-2">My Registrations</h2>
+        <p class="text-gray-400 mb-8">Events you've successfully registered for</p>
+        <div id="myRegList" class="space-y-4"></div>
+      </div>
+
+      <!-- ADMIN SECTION -->
+      <div id="adminSection" style="display: none;">
+        <h2 class="text-3xl font-bold mb-6">Admin Control Panel</h2>
+        <div class="glass-card p-6 mb-8">
+          <h3 class="text-xl font-bold mb-4">➕ Create New Event</h3>
+          <form id="createEventForm" class="grid md:grid-cols-2 gap-5">
+            <input type="text" id="eventName" placeholder="Event Name" class="input-modern" required>
+            <select id="eventCategory" class="input-modern" required><option value="">Category</option><option value="technical">Technical</option><option value="cultural">Cultural</option><option value="workshop">Workshop</option><option value="seminar">Seminar</option></select>
+            <input type="date" id="eventDate" class="input-modern" required>
+            <input type="text" id="eventVenue" placeholder="Venue" class="input-modern" required>
+            <input type="number" id="eventCapacity" placeholder="Capacity" class="input-modern" required>
+            <textarea id="eventDesc" rows="2" placeholder="Description" class="input-modern md:col-span-2" required></textarea>
+            <button type="submit" class="btn-primary md:col-span-2">Publish Event</button>
+          </form>
+        </div>
+        <div class="glass-card p-6">
+          <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">📋 All Registrations</h3><button id="exportCsvBtn" class="btn-secondary text-sm">📎 Export CSV</button></div>
+          <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-[#2dd4bf30]"><th class="text-left py-3">Student</th><th class="text-left">Event</th><th class="text-left">Department</th><th class="text-left">Action</th></tr></thead><tbody id="adminRegTable"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toastMsg" class="toast">✅ Action successful</div>
+
+<!-- REGISTRATION MODAL -->
+<div id="regModal" class="modal-overlay">
+  <div class="modal-content glass-card p-6">
+    <h3 class="text-2xl font-bold" id="modalEventTitle">Event Name</h3>
+    <p class="text-gray-400 text-sm mb-4" id="modalEventInfo"></p>
+    <form id="registerFormModal">
+      <input type="text" id="regFullName" placeholder="Full Name" class="input-modern mb-3" required>
+      <input type="email" id="regEmail" placeholder="Email" class="input-modern mb-3" required>
+      <select id="regDept" class="input-modern mb-3" required><option value="">Department</option><option>CSE</option><option>ECE</option><option>Mechanical</option><option>Civil</option><option>Business</option></select>
+      <select id="regYear" class="input-modern mb-4" required><option value="">Year</option><option>1st</option><option>2nd</option><option>3rd</option><option>4th</option></select>
+      <div class="flex gap-3"><button type="button" class="btn-secondary flex-1" id="closeModalBtn">Cancel</button><button type="submit" class="btn-primary flex-1">Confirm Register</button></div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+  import * as THREE from 'three';
+  
+  // ---- 3D Background Animation ----
+  const canvas = document.getElementById('canvas-bg');
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.position.z = 25;
+  
+  const starGeometry = new THREE.BufferGeometry();
+  const starCount = 1200;
+  const starPos = [];
+  for (let i = 0; i < starCount; i++) {
+    starPos.push((Math.random() - 0.5) * 200);
+    starPos.push((Math.random() - 0.5) * 100);
+    starPos.push((Math.random() - 0.5) * 80 - 30);
+  }
+  starGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(starPos), 3));
+  const starMat = new THREE.PointsMaterial({ color: 0x2dd4bf, size: 0.2, transparent: true, opacity: 0.5 });
+  const stars = new THREE.Points(starGeometry, starMat);
+  scene.add(stars);
+  
+  const ringGeo = new THREE.TorusGeometry(5, 0.15, 64, 300);
+  const ringMat = new THREE.MeshStandardMaterial({ color: 0x2dd4bf, emissive: 0x0f766e, emissiveIntensity: 0.4 });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  scene.add(ring);
+  const ambient = new THREE.AmbientLight(0x111122);
+  scene.add(ambient);
+  const light = new THREE.PointLight(0x2dd4bf, 1);
+  light.position.set(10, 10, 10);
+  scene.add(light);
+  
+  function animateBG() {
+    requestAnimationFrame(animateBG);
+    ring.rotation.x += 0.005;
+    ring.rotation.y += 0.008;
+    stars.rotation.y += 0.0005;
+    stars.rotation.x += 0.0003;
+    renderer.render(scene, camera);
+  }
+  animateBG();
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+  
+  // ------------------------------
+  // BACKEND-LIKE DATA (persistent in localStorage)
+  // ------------------------------
+  let events = [
+    { id: 1, name: "Code Fusion 2025", category: "technical", date: "2025-04-15", venue: "Main Audi", description: "24hr hackathon & coding challenge", capacity: 200, registered: 124, image: "💻" },
+    { id: 2, name: "Spring Fest", category: "cultural", date: "2025-04-20", venue: "Open Ground", description: "Music, dance, fashion show", capacity: 500, registered: 310, image: "🎭" },
+    { id: 3, name: "AI/ML Workshop", category: "workshop", date: "2025-04-18", venue: "CS Lab", description: "Hands-on ML with Python", capacity: 60, registered: 58, image: "🤖" },
+    { id: 4, name: "Future Leaders Seminar", category: "seminar", date: "2025-04-22", venue: "Conference Hall", description: "Industry leaders panel", capacity: 150, registered: 98, image: "🎤" },
+    { id: 5, name: "RoboWar", category: "technical", date: "2025-04-25", venue: "Mechanical Block", description: "Battle bots competition", capacity: 40, registered: 32, image: "⚙️" },
+    { id: 6, name: "Dance Battle", category: "cultural", date: "2025-04-28", venue: "Auditorium", description: "Solo & group dance", capacity: 100, registered: 72, image: "💃" },
+    { id: 7, name: "UI/UX Design Workshop", category: "workshop", date: "2025-04-30", venue: "Design Studio", description: "Figma & prototyping", capacity: 45, registered: 40, image: "🎨" }
+  ];
+  
+  let registrations = []; // each: { id, eventId, studentName, studentEmail, department, year, registeredAt }
+  let currentUser = null;
+  let selectedEventId = null;
+  
+  // Load from localStorage
+  function loadData() {
+    const storedEvents = localStorage.getItem('campus_events');
+    const storedRegs = localStorage.getItem('campus_registrations');
+    if (storedEvents) events = JSON.parse(storedEvents);
+    if (storedRegs) registrations = JSON.parse(storedRegs);
+  }
+  function saveData() {
+    localStorage.setItem('campus_events', JSON.stringify(events));
+    localStorage.setItem('campus_registrations', JSON.stringify(registrations));
+  }
+  loadData();
+  
+  // Helper: update stats
+  function refreshStats() {
+    const totalRegs = registrations.length;
+    const activeEvents = events.length;
+    document.getElementById('statEvents').innerText = activeEvents;
+    document.getElementById('statRegs').innerText = totalRegs;
+    if (currentUser?.role === 'admin') document.getElementById('total-registrations-count') && (document.getElementById('total-registrations-count').innerText = totalRegs);
+  }
+  
+  // Render functions
+  function renderFeatured() {
+    const featured = events.slice(0, 3);
+    const container = document.getElementById('featuredGrid');
+    if (container) container.innerHTML = featured.map(ev => eventCardHTML(ev)).join('');
+  }
+  
+  function renderAllEvents(filter = 'all') {
+    const filtered = filter === 'all' ? events : events.filter(e => e.category === filter);
+    const grid = document.getElementById('allEventsGrid');
+    if (grid) grid.innerHTML = filtered.map(ev => eventCardHTML(ev)).join('');
+  }
+  
+  function eventCardHTML(ev) {
+    const fillPercent = (ev.registered / ev.capacity) * 100;
+    let badgeClass = 'badge-tech';
+    if (ev.category === 'cultural') badgeClass = 'badge-cultural';
+    else if (ev.category === 'workshop') badgeClass = 'badge-workshop';
+    else if (ev.category === 'seminar') badgeClass = 'badge-seminar';
+    return `
+      <div class="glass-card p-5 transition-all">
+        <div class="flex justify-between items-start"><span class="event-badge ${badgeClass}">${ev.category}</span><span class="text-2xl">${ev.image || '📌'}</span></div>
+        <h3 class="text-xl font-bold mt-2">${ev.name}</h3>
+        <p class="text-gray-400 text-sm mt-1 line-clamp-2">${ev.description}</p>
+        <div class="flex gap-3 text-xs text-gray-400 mt-3"><span>📅 ${ev.date}</span><span>📍 ${ev.venue}</span></div>
+        <div class="mt-3 bg-gray-800 rounded-full h-2"><div class="bg-[#2dd4bf] h-2 rounded-full" style="width: ${fillPercent}%"></div></div>
+        <div class="flex justify-between text-xs mt-1"><span>${ev.registered}/${ev.capacity}</span><span>${Math.round(fillPercent)}%</span></div>
+        <button class="btn-primary w-full mt-4 text-sm py-2 register-event-btn" data-id="${ev.id}">Register →</button>
+      </div>
+    `;
+  }
+  
+  function renderMyRegistrations() {
+    const container = document.getElementById('myRegList');
+    if (!currentUser) return;
+    const myRegs = registrations.filter(r => r.studentEmail === currentUser.email);
+    if (myRegs.length === 0) {
+      container.innerHTML = `<div class="glass-card p-10 text-center"><p class="text-gray-400">You haven't registered for any events yet.</p><button class="btn-primary mt-4" id="gotoEventsBtn">Browse Events</button></div>`;
+      document.getElementById('gotoEventsBtn')?.addEventListener('click', () => showSection('events'));
+      return;
+    }
+    container.innerHTML = myRegs.map(reg => {
+      const ev = events.find(e => e.id === reg.eventId);
+      if (!ev) return '';
+      return `
+        <div class="glass-card p-5 flex flex-wrap justify-between items-center gap-4">
+          <div><div class="font-bold text-lg">${ev.name}</div><div class="text-sm text-gray-400">${ev.date} • ${ev.venue}</div><div class="text-xs text-[#2dd4bf]">Registered: ${new Date(reg.registeredAt).toLocaleDateString()}</div></div>
+          <div><span class="event-badge badge-${ev.category}">${ev.category}</span></div>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  function renderAdminTable() {
+    const tbody = document.getElementById('adminRegTable');
+    if (!tbody) return;
+    if (registrations.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="py-6 text-center text-gray-500">No registrations yet</td></tr>'; return; }
+    tbody.innerHTML = registrations.map((reg, idx) => {
+      const ev = events.find(e => e.id === reg.eventId);
+      return `<tr class="border-b border-[#2dd4bf20]"><td class="py-3">${reg.studentName}<br><span class="text-xs text-gray-500">${reg.studentEmail}</span></td><td>${ev?.name || 'Deleted'}</td><td>${reg.department} (${reg.year})</td><td><button class="text-red-400 text-xs delete-reg-btn" data-index="${idx}">❌ Cancel</button></td></tr>`;
+    }).join('');
+    document.querySelectorAll('.delete-reg-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const idx = parseInt(btn.dataset.index);
+        if (!isNaN(idx) && registrations[idx]) {
+          const regEvent = events.find(e => e.id === registrations[idx].eventId);
+          if (regEvent) regEvent.registered = Math.max(0, regEvent.registered - 1);
+          registrations.splice(idx, 1);
+          saveData();
+          renderAdminTable();
+          renderAllEvents(document.querySelector('.filter-chip.active')?.dataset.cat || 'all');
+          renderMyRegistrations();
+          refreshStats();
+          showToastMessage("Registration cancelled");
+        }
+      });
+    });
+  }
+  
+  function showSection(section) {
+    document.getElementById('homeSection').style.display = 'none';
+    document.getElementById('eventsSection').style.display = 'none';
+    document.getElementById('myRegSection').style.display = 'none';
+    document.getElementById('adminSection').style.display = 'none';
+    if (section === 'home') document.getElementById('homeSection').style.display = 'block';
+    if (section === 'events') { document.getElementById('eventsSection').style.display = 'block'; renderAllEvents(); }
+    if (section === 'myreg') { document.getElementById('myRegSection').style.display = 'block'; renderMyRegistrations(); }
+    if (section === 'admin' && currentUser?.role === 'admin') { document.getElementById('adminSection').style.display = 'block'; renderAdminTable(); refreshStats(); }
+    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+    if (section === 'home') document.querySelector('[data-nav="home"]')?.classList.add('active');
+    if (section === 'events') document.querySelector('[data-nav="events"]')?.classList.add('active');
+    if (section === 'myreg') document.querySelector('[data-nav="myreg"]')?.classList.add('active');
+    if (section === 'admin') document.querySelector('[data-nav="admin"]')?.classList.add('active');
+  }
+  
+  function showToastMessage(msg) {
+    const toast = document.getElementById('toastMsg');
+    toast.innerText = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+  }
+  
+  function openRegisterModal(eventId) {
+    const ev = events.find(e => e.id === eventId);
+    if (!ev) return;
+    selectedEventId = eventId;
+    document.getElementById('modalEventTitle').innerText = ev.name;
+    document.getElementById('modalEventInfo').innerText = `${ev.date} • ${ev.venue} • Capacity left: ${ev.capacity - ev.registered}`;
+    if (currentUser) {
+      document.getElementById('regFullName').value = currentUser.username;
+      document.getElementById('regEmail').value = currentUser.email;
+    } else {
+      document.getElementById('regFullName').value = '';
+      document.getElementById('regEmail').value = '';
+    }
+    document.getElementById('regModal').classList.add('active');
+  }
+  
+  // EVENT LISTENERS GLOBALLY
+  window.showSection = showSection;
+  
+  // Login logic
+  document.getElementById('loginForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const username = document.getElementById('loginUser').value.trim();
+    const role = document.querySelector('input[name="role"]:checked').value;
+    if (!username) return;
+    currentUser = {
+      username: username,
+      email: `${username.toLowerCase().replace(/\s/g, '')}@student.edu`,
+      role: role
+    };
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    document.getElementById('userNameSpan').innerText = `👋 ${username}`;
+    if (role === 'admin') {
+      document.getElementById('adminNavBtn').style.display = 'block';
+    } else {
+      document.getElementById('adminNavBtn').style.display = 'none';
+    }
+    showSection('home');
+    renderFeatured();
+    refreshStats();
+    showToastMessage(`Welcome ${username} (${role})`);
+  });
+  
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    currentUser = null;
+    document.getElementById('loginPage').style.display = 'flex';
+    document.getElementById('mainApp').style.display = 'none';
+    document.getElementById('loginForm').reset();
+  });
+  
+  document.getElementById('exploreEventsBtn').addEventListener('click', () => showSection('events'));
+  document.querySelectorAll('[data-nav]').forEach(btn => {
+    btn.addEventListener('click', () => showSection(btn.dataset.nav));
+  });
+  
+  // Filter events
+  document.querySelectorAll('.filter-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cat = btn.dataset.cat;
+      renderAllEvents(cat);
+    });
+  });
+  
+  // Event delegation for register buttons
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('register-event-btn')) {
+      const id = parseInt(e.target.dataset.id);
+      openRegisterModal(id);
+    }
+  });
+  
+  // Registration modal submit
+  document.getElementById('registerFormModal').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const eventObj = events.find(e => e.id === selectedEventId);
+    if (!eventObj) return;
+    if (eventObj.registered >= eventObj.capacity) {
+      showToastMessage("Event is full! Cannot register.");
+      document.getElementById('regModal').classList.remove('active');
+      return;
+    }
+    const newReg = {
+      id: Date.now(),
+      eventId: selectedEventId,
+      studentName: document.getElementById('regFullName').value,
+      studentEmail: document.getElementById('regEmail').value,
+      department: document.getElementById('regDept').value,
+      year: document.getElementById('regYear').value,
+      registeredAt: new Date().toISOString()
+    };
+    registrations.push(newReg);
+    eventObj.registered += 1;
+    saveData();
+    renderAllEvents(document.querySelector('.filter-chip.active')?.dataset.cat || 'all');
+    renderFeatured();
+    if (currentUser?.role === 'admin') renderAdminTable();
+    if (currentUser?.role === 'student') renderMyRegistrations();
+    refreshStats();
+    document.getElementById('regModal').classList.remove('active');
+    showToastMessage(`Registered for ${eventObj.name}!`);
+  });
+  
+  document.getElementById('closeModalBtn').addEventListener('click', () => {
+    document.getElementById('regModal').classList.remove('active');
+  });
+  document.getElementById('regModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('regModal')) document.getElementById('regModal').classList.remove('active');
+  });
+  
+  // Admin create event
+  document.getElementById('createEventForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const newEvent = {
+      id: Date.now(),
+      name: document.getElementById('eventName').value,
+      category: document.getElementById('eventCategory').value,
+      date: document.getElementById('eventDate').value,
+      venue: document.getElementById('eventVenue').value,
+      description: document.getElementById('eventDesc').value,
+      capacity: parseInt(document.getElementById('eventCapacity').value),
+      registered: 0,
+      image: "🎉"
+    };
+    events.push(newEvent);
+    saveData();
+    renderAllEvents('all');
+    renderFeatured();
+    refreshStats();
+    document.getElementById('createEventForm').reset();
+    showToastMessage(`Event "${newEvent.name}" created`);
+  });
+  
+  document.getElementById('exportCsvBtn')?.addEventListener('click', () => {
+    let csvRows = [["Student Name","Email","Event","Department","Date"]];
+    registrations.forEach(reg => {
+      const ev = events.find(e => e.id === reg.eventId);
+      csvRows.push([reg.studentName, reg.studentEmail, ev?.name || 'Unknown', reg.department, new Date(reg.registeredAt).toLocaleDateString()]);
+    });
+    const csvContent = csvRows.map(row => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "campus_registrations.csv"; a.click(); URL.revokeObjectURL(url);
+    showToastMessage("CSV exported");
+  });
+  
+  // initial sync
+  refreshStats();
+</script>
+</body>
+</html>

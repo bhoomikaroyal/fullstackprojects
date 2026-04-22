@@ -1,0 +1,78 @@
+ <div class="app-container">
+    <!-- Login Page -->
+    "block text-sm font-medium mb-2 text-[var(--muted)]">Username</label>
+              <input type="text" id="login-username" class="input-field" placeholder="Enter your username" required>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium mb-2 text-[var(--muted)]">Password</label>
+              <input type="password" id="login-password" class="input-field" placeholder="Enter your password" required>
+            </div>
+            
+            <div class="flex items-center gap-3 pt-2">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="role" value="student" checked class="w-4 h-4 accent-[var(--accent)]">
+                <span class="text-sm">Student</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="role" value="admin" class="w-4 h-4 accent-[var(--accent)]">
+                <span class="text-sm">Admin</span>
+              </label>
+            </div>
+            
+            <button type="submit" class="btn-primary w-full mt-6">
+              Sign In
+            </button>
+          </form>
+          
+          <p class="text-center text-[var(--muted)] text-sm mt-6">
+            Demo: Use any username/password
+          </p>
+        </div>
+      </div>
+    </div><div id="login-page" class="page active">
+      <div class="min-h-screen flex items-center justify-center p-6">
+        <div class="glass-card p-10 w-full max-w-md" style="animation: slideUp 0.6s ease">
+          <div class="text-center mb-8">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[var(--accent)] to-[#00a080] flex items-center justify-center">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[var(--bg)]">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+              </svg>
+            </div>
+            <h1 class="text-3xl font-bold mb-2">Campus Portal</h1>
+            <p class="text-[var(--muted)]">Event Management System</p>
+          </div>
+          
+          <form id="login-form" class="space-y-5">
+            <div>
+              <label class=
+    
+    <!-- Main App -->
+    <div id="main-app" class="page">
+      <!-- Navigation -->
+      <nav class="fixed top-0 left-0 right-0 z-50 glass-card rounded-none border-t-0 border-x-0">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[#00a080] flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[var(--bg)]">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+              </svg>
+            </div>
+            <span class="font-bold text-xl">CampusEvents</span>
+          </div>
+          
+          <div class="hidden md:flex items-center gap-2">
+            <button class="nav-link active" data-page="home">Home</button>
+            <button class="nav-link" data-page="events">Events</button>
+            <button class="nav-link" data-page="my-registrations" id="my-reg-nav">My Registrations</button>
+            <button class="nav-link" data-page="admin" id="admin-nav" style="display: none;">Admin</button>
+          </div>
+          
+          <div class="flex items-center gap-4">
+            <span id="user-display" class="text-sm text-[var(--muted)]"></span>
+            <button id="logout-btn" class="btn-secondary text-sm py-2 px-4">Logout</button>
+          </div>
+        </div>
+      </nav>

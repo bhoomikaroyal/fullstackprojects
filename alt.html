@@ -335,7 +335,23 @@
   
   <div class="app-container">
     <!-- Login Page -->
-    "block text-sm font-medium mb-2 text-[var(--muted)]">Username</label>
+    <div id="login-page" class="page active">
+      <div class="min-h-screen flex items-center justify-center p-6">
+        <div class="glass-card p-10 w-full max-w-md" style="animation: slideUp 0.6s ease">
+          <div class="text-center mb-8">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[var(--accent)] to-[#00a080] flex items-center justify-center">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[var(--bg)]">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+              </svg>
+            </div>
+            <h1 class="text-3xl font-bold mb-2">Campus Portal</h1>
+            <p class="text-[var(--muted)]">Event Management System</p>
+          </div>
+          
+          <form id="login-form" class="space-y-5">
+            <div>
+              <label class="block text-sm font-medium mb-2 text-[var(--muted)]">Username</label>
               <input type="text" id="login-username" class="input-field" placeholder="Enter your username" required>
             </div>
             
@@ -365,23 +381,7 @@
           </p>
         </div>
       </div>
-    </div><div id="login-page" class="page active">
-      <div class="min-h-screen flex items-center justify-center p-6">
-        <div class="glass-card p-10 w-full max-w-md" style="animation: slideUp 0.6s ease">
-          <div class="text-center mb-8">
-            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[var(--accent)] to-[#00a080] flex items-center justify-center">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[var(--bg)]">
-                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-              </svg>
-            </div>
-            <h1 class="text-3xl font-bold mb-2">Campus Portal</h1>
-            <p class="text-[var(--muted)]">Event Management System</p>
-          </div>
-          
-          <form id="login-form" class="space-y-5">
-            <div>
-              <label class=
+    </div>
     
     <!-- Main App -->
     <div id="main-app" class="page">
@@ -529,12 +529,11 @@
       </section>
       
       <!-- My Registrations Section -->
-      <section id="my-registrations-section" class="pt-28 pb-20 px-6 hidden">
-        <div class="max-w-4xl mx-auto">
-          <h1 class="text-4xl font-bold mb-8">My Registrations</h1>
-          <div id="registrations-list" class="space-y-4"></div>
-        </div>
-      </section>
+      <div id="myRegSection" style="display: none;">
+        <h2 class="text-3xl font-bold mb-2">My Registrations</h2>
+        <p class="text-gray-400 mb-8">Events you've successfully registered for</p>
+        <div id="myRegList" class="space-y-4"></div>
+      </div>
       
       <!-- Admin Section -->
       <section id="admin-section" class="pt-28 pb-20 px-6 hidden">
@@ -1058,47 +1057,25 @@
     }
     
     function renderMyRegistrations() {
-      const userRegs = registrations.filter(r => r.email === currentUser?.email);
-      
-      if (userRegs.length === 0) {
-        registrationsList.innerHTML = `
-          <div class="glass-card p-8 text-center">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1" class="mx-auto mb-4">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
-            </svg>
-            <h3 class="text-xl font-semibold mb-2">No Registrations Yet</h3>
-            <p class="text-[var(--muted)] mb-4">You haven't registered for any events.</p>
-            <button class="btn-primary" onclick="showSection('events')">Browse Events</button>
-          </div>
-        `;
-        return;
-      }
-      
-      registrationsList.innerHTML = userRegs.map((reg, i) => {
-        const event = eventsData.find(e => e.id === reg.eventId);
-        if (!event) return '';
-        
-        return `
-          <div class="glass-card p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 scroll-reveal" style="transition-delay: ${i * 0.1}s">
-            <div class="flex items-center gap-4">
-              <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[#00a080] flex items-center justify-center text-[var(--bg)] font-bold text-xl">
-                ${event.name.charAt(0)}
-              </div>
-              <div>
-                <h3 class="font-semibold text-lg">${event.name}</h3>
-                <p class="text-[var(--muted)] text-sm">${new Date(event.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} at ${event.time}</p>
-                <p class="text-[var(--muted)] text-sm">${event.venue}</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="category-badge category-${event.category}">${event.category}</span>
-              <span class="px-3 py-1 rounded-full bg-[rgba(0,212,170,0.2)] text-[var(--accent)] text-sm font-medium">Confirmed</span>
-            </div>
-          </div>
-        `;
-      }).join('');
+    const container = document.getElementById('myRegList');
+    if (!currentUser) return;
+    const myRegs = registrations.filter(r => r.studentEmail === currentUser.email);
+    if (myRegs.length === 0) {
+      container.innerHTML = `<div class="glass-card p-10 text-center"><p class="text-gray-400">You haven't registered for any events yet.</p><button class="btn-primary mt-4" id="gotoEventsBtn">Browse Events</button></div>`;
+      document.getElementById('gotoEventsBtn')?.addEventListener('click', () => showSection('events'));
+      return;
     }
+    container.innerHTML = myRegs.map(reg => {
+      const ev = events.find(e => e.id === reg.eventId);
+      if (!ev) return '';
+      return `
+        <div class="glass-card p-5 flex flex-wrap justify-between items-center gap-4">
+          <div><div class="font-bold text-lg">${ev.name}</div><div class="text-sm text-gray-400">${ev.date} • ${ev.venue}</div><div class="text-xs text-[#2dd4bf]">Registered: ${new Date(reg.registeredAt).toLocaleDateString()}</div></div>
+          <div><span class="event-badge badge-${ev.category}">${ev.category}</span></div>
+        </div>
+      `;
+    }).join('');
+  }
     
     function renderAdminRegistrations() {
       const totalRegs = registrations.length;
@@ -1371,6 +1348,22 @@
     document.querySelectorAll('.scroll-reveal').forEach(el => {
       observer.observe(el);
     });
+    document.getElementById('exportCsvBtn')?.addEventListener('click', () => {
+    let csvRows = [["Student Name","Email","Event","Department","Date"]];
+    registrations.forEach(reg => {
+      const ev = events.find(e => e.id === reg.eventId);
+      csvRows.push([reg.studentName, reg.studentEmail, ev?.name || 'Unknown', reg.department, new Date(reg.registeredAt).toLocaleDateString()]);
+    });
+    const csvContent = csvRows.map(row => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "campus_registrations.csv"; a.click(); URL.revokeObjectURL(url);
+    showToastMessage("CSV exported");
+  });
+  
+  // initial sync
+  refreshStats();
   </script>
 </body>
-</html> 
+</html> ">

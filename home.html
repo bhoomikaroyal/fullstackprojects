@@ -1,0 +1,115 @@
+ <!-- Home Section -->
+      <section id="home-section" class="pt-28 pb-20 px-6">
+        <div class="max-w-7xl mx-auto">
+          <!-- Hero -->
+          <div class="text-center mb-16 scroll-reveal">
+            <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+              Discover Campus<br>
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent)] to-[#00a080]">Events</span>
+            </h1>
+            <p class="text-xl text-[var(--muted)] max-w-2xl mx-auto mb-8">
+              Register for workshops, seminars, cultural events and more. All in one place.
+            </p>
+            <button class="btn-primary text-lg" onclick="showSection('events')">
+              Explore Events
+            </button>
+          </div>
+          
+          <!-- Stats -->
+          <div class="grid md:grid-cols-4 gap-6 mb-16">
+            <div class="glass-card stat-card p-6 scroll-reveal" style="transition-delay: 0.1s">
+              <div class="text-4xl font-bold text-[var(--accent)] mb-2">24</div>
+              <div class="text-[var(--muted)]">Active Events</div>
+            </div>
+            <div class="glass-card stat-card p-6 scroll-reveal" style="transition-delay: 0.2s">
+              <div class="text-4xl font-bold text-[var(--accent)] mb-2">1,420</div>
+              <div class="text-[var(--muted)]">Participants</div>
+            </div>
+            <div class="glass-card stat-card p-6 scroll-reveal" style="transition-delay: 0.3s">
+              <div class="text-4xl font-bold text-[var(--accent)] mb-2">8</div>
+              <div class="text-[var(--muted)]">Departments</div>
+            </div>
+            <div class="glass-card stat-card p-6 scroll-reveal" style="transition-delay: 0.4s">
+              <div class="text-4xl font-bold text-[var(--accent)] mb-2">95%</div>
+              <div class="text-[var(--muted)]">Satisfaction</div>
+            </div>
+          </div>
+          
+          <!-- Featured Events -->
+          <div class="mb-16">
+            <h2 class="text-3xl font-bold mb-8 scroll-reveal">Featured Events</h2>
+            <div id="featured-events" class="grid md:grid-cols-3 gap-6"></div>
+          </div>
+          
+          <!-- Categories -->
+          <div class="scroll-reveal">
+            <h2 class="text-3xl font-bold mb-8">Browse by Category</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <button class="glass-card p-6 text-left hover:border-[var(--accent)] transition-all group" onclick="filterEvents('technical')">
+                <div class="w-12 h-12 rounded-xl bg-[rgba(0,212,170,0.2)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                  </svg>
+                </div>
+                <div class="font-semibold mb-1">Technical</div>
+                <div class="text-sm text-[var(--muted)]">8 events</div>
+              </button>
+              
+              <button class="glass-card p-6 text-left hover:border-[var(--accent)] transition-all group" onclick="filterEvents('cultural')">
+                <div class="w-12 h-12 rounded-xl bg-[rgba(255,107,107,0.2)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>
+                  </svg>
+                </div>
+                <div class="font-semibold mb-1">Cultural</div>
+                <div class="text-sm text-[var(--muted)]">6 events</div>
+              </button>
+              
+              <button class="glass-card p-6 text-left hover:border-[var(--accent)] transition-all group" onclick="filterEvents('workshop')">
+                <div class="w-12 h-12 rounded-xl bg-[rgba(255,165,2,0.2)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2">
+                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                  </svg>
+                </div>
+                <div class="font-semibold mb-1">Workshops</div>
+                <div class="text-sm text-[var(--muted)]">5 events</div>
+              </button>
+              
+              <button class="glass-card p-6 text-left hover:border-[var(--accent)] transition-all group" onclick="filterEvents('seminar')">
+                <div class="w-12 h-12 rounded-xl bg-[rgba(116,185,255,0.2)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#74b9ff" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                </div>
+                <div class="font-semibold mb-1">Seminars</div>
+                <div class="text-sm text-[var(--muted)]">5 events</div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Events Section -->
+      <section id="events-section" class="pt-28 pb-20 px-6 hidden">
+        <div class="max-w-7xl mx-auto">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div>
+              <h1 class="text-4xl font-bold mb-2">All Events</h1>
+              <p class="text-[var(--muted)]">Discover and register for upcoming events</p>
+            </div>
+            
+            <div class="flex flex-wrap gap-3">
+              <button class="btn-secondary text-sm filter-btn active" data-filter="all">All</button>
+              <button class="btn-secondary text-sm filter-btn" data-filter="technical">Technical</button>
+              <button class="btn-secondary text-sm filter-btn" data-filter="cultural">Cultural</button>
+              <button class="btn-secondary text-sm filter-btn" data-filter="workshop">Workshop</button>
+              <button class="btn-secondary text-sm filter-btn" data-filter="seminar">Seminar</button>
+            </div>
+          </div>
+          
+          <div id="events-list" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+      </section>

@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventPulse — Ticket Booking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+                        serif: ['Playfair Display', 'Georgia', 'serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        ::selection { background: #2a3557; color: #fff; }
+        html { scroll-behavior: smooth; }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 0.6; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100px) rotate(720deg); opacity: 0; }
+        }
+        @keyframes countPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        .animate-fade-up { animation: fadeSlideUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        .animate-fade-in { animation: fadeIn 0.5s ease forwards; }
+        .animate-scale-in { animation: scaleIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        .animate-slide-down { animation: slideDown 0.3s ease forwards; }
+        .animate-count-pulse { animation: countPulse 0.4s ease; }
+
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+        .delay-400 { animation-delay: 0.4s; }
+        .delay-500 { animation-delay: 0.5s; }
+
+        .confetti-piece {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            animation: confetti-fall 1.5s ease forwards;
+        }
+
+        .ticket-divider {
+            background-image: radial-gradient(circle, #d4d4d8 6px, transparent 6px);
+            background-size: 20px 20px;
+            background-position: center;
+            height: 20px;
+        }
+
+        .input-focus-ring:focus-within {
+            box-shadow: 0 0 0 3px rgba(42, 53, 87, 0.15);
+        }
+
+        .toast-enter {
+            animation: slideDown 0.3s ease forwards;
+        }
+    </style>
+</head>
+<body class="font-sans bg-white text-neutral-900 antialiased">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useCallback, useEffect, useRef } = React;
+
+        // ─── Event Data ───────────────────────────────────────────
+        const EVENT_DATA = {
+            name: "TechNova 2025",
+            subtitle: "Annual Technical Festival",
+            department: "Department of Computer Science & Engineering",
+            date: "March 15, 2025",
+            day: "Saturday",
+            time: "9:00 AM – 5:00 PM",
+            venue: "Main Auditorium, Block A",
+            price: 150,
+            totalTickets: 200,
+            description: "Join us for a day of innovation featuring workshops on AI/ML, Web Development, and Cybersecurity. Participate in coding competitions, tech talks by industry leaders, and networking sessions.",
+            highlights: ["4 Workshops", "Coding Contest", "Tech Talks", "Networking"],
+        };
+
+        // ─── Toast Component ──────────────────────────────────────
+        function Toast({ message, type, onClose }) {
+            useEffect(() => {
+                const timer = setTimeout(onClose, 4000);
+                return () => clearTimeout(timer);
+            }, [onClose]);
+
+            const bgColor = type === 'error' ? 'bg-red-50 border-red-200 text-red-800' :
+                            type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+                            'bg-amber-50 border-amber-200 text-amber-800';
+
+            const icon = type === 'error' ? (
+                <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            ) : type === 'success' ? (
+                <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            ) : (
+                <svg className="w-5 h-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                </svg>
+            );
+
+            return (
+                <div className={`toast-enter fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-xl border shadow-lg max-w-sm ${bgColor}`}>
+                    {icon}
+                    <span className="text-sm font-medium">{message}</span>
+                    <button onClick={onClose} className="ml-2 shrink-0 opacity-60 hover:opacity-100 transition-opacity">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            );
+        }
+
+        // ─── Navbar Component ─────────────────────────────────────
+        function Navbar({ availableTickets, totalTickets }) {
+            const [scrolled, setScrolled] = useState(false);
+
+            useEffect(() => {
+                const handler = () => setScrolled(window.scrollY > 20);
+                window.addEventListener('scroll', handler);
+                return () => window.removeEventListener('scroll', handler);
+            }, []);
+
+            const percentage = Math.round((availableTickets / totalTickets) * 100);
+            const barColor = percentage > 50 ? 'bg-emerald-500' : percentage > 20 ? 'bg-amber-500' : 'bg-red-500';
+
+            return (
+                <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm' : 'bg-transparent'}`}>
+                    <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 xl:px-20 py-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className="w-9 h-9 bg-[#2a3557] rounded-lg flex items-center justify-center">
+                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+                                </svg>
+                            </div>
+                            <span className="text-lg font-bold tracking-tight">Event<span className="text-[#2a3557]">Pulse</span></span>
+                        </div>
+                        <div className="hidden sm:flex items-center gap-6 text-xs font-medium uppercase tracking-widest text-neutral-500">
+                            <a href="#event" className="hover:text-neutral-900 transition-colors">Event</a>
+                            <a href="#booking" className="hover:text-neutral-900 transition-colors">Book</a>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="hidden md:flex items-center gap-2 text-xs">
+                                <div className="w-24 h-1.5 bg-neutral-200 rounded-full overflow-hidden">
+                                    <div className={`h-full rounded-full transition-all duration-700 ${barColor}`} style={{ width: `${percentage}%` }}></div>
+                                </div>
+                                <span className="font-semibold text-neutral-700">{availableTickets} left</span>
+                            </div>
+                            <a href="#booking"
+                               className="bg-[#2a3557] hover:bg-[#1e2a4a] text-white text-xs font-semibold uppercase tracking-wide py-2.5 px-5 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                                Book Now
+                            </a>
+                        </div>
+                    </div>
+                </nav>
+            );
+        }
+
+        // ─── Hero Section ─────────────────────────────────────────
+        function HeroSection() {
+            return (
+                <section id="event" className="relative min-h-screen flex items-center overflow-hidden">
+                    {/* Background */}
+                    <div className="absolute inset-0">
+                        <img src="https://picsum.photos/seed/technova2025/3840/2160.jpg" alt="Event background"
+                             className="w-full h-full object-cover scale-105" />
+                        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.3), rgba(0,0,0,0.7))' }}></div>
+                    </div>
+
+                    {/* Decorative elements */}
+                    <div className="absolute top-20 right-10 w-72 h-72 border border-white/10 rounded-full animate-[spin_30s_linear_infinite]"></div>
+                    <div className="absolute bottom-20 left-10 w-48 h-48 border border-white/10 rounded-full animate-[spin_20s_linear_infinite_reverse]"></div>
+
+                    {/* Content */}
+                    <div className="relative z-10 max-w-screen-2xl mx-auto px-6 lg:px-10 xl:px-20 py-32 w-full">
+                        <div className="max-w-3xl">
+                            <div className="animate-fade-up opacity-0">
+                                <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/70 mb-6">
+                                    <span className="w-8 h-px bg-white/40"></span>
+                                    {EVENT_DATA.department}
+                                </span>
+                            </div>
+                            <h1 className="animate-fade-up opacity-0 delay-100 text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-medium leading-[0.95] tracking-tight text-white mb-6">
+                                {EVENT_DATA.name}
+                            </h1>
+                            <p className="animate-fade-up opacity-0 delay-200 text-lg sm:text-xl text-white/70 font-light max-w-xl mb-10 leading-relaxed">
+                                {EVENT_DATA.description}
+                            </p>
+                            <div className="animate-fade-up opacity-0 delay-300 flex flex-wrap gap-3 mb-12">
+                                {EVENT_DATA.highlights.map((h, i) => (
+                                    <span key={i} className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/90 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2">
+                                        <svg className="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                                        </svg>
+                                        {h}
+                                    </span>
+                                ))}
+                            </div>
+                            <div className="animate-fade-up opacity-0 delay-400 flex flex-wrap gap-4">
+                                <a href="#booking"
+                                   className="group inline-flex items-center gap-2 bg-white text-neutral-900 text-sm font-semibold uppercase tracking-wide py-4 px-8 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+                                    Book Tickets
+                                    <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                    </svg>
+                                </a>
+                                <a href="#details"
+                                   className="inline-flex items-center gap-2 border border-white/30 text-white text-sm font-semibold uppercase tracking-wide py-4 px-8 rounded-lg transition-all duration-300 hover:bg-white/10">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Scroll indicator */}
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/40">
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold">Scroll</span>
+                        <div className="w-5 h-8 border border-white/30 rounded-full flex items-start justify-center p-1">
+                            <div className="w-1 h-2 bg-white/60 rounded-full animate-bounce"></div>
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        // ─── Event Details Component ──────────────────────────────
+        function EventDetails({ availableTickets, totalTickets }) {
+            const details = [
+                { icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                ), label: "Date", value: EVENT_DATA.date, sub: EVENT_DATA.day },
+                { icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                ), label: "Time", value: EVENT_DATA.time },
+                { icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                ), label: "Venue", value: EVENT_DATA.venue },
+                { icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                ), label: "Ticket Price", value: `₹${EVENT_DATA.price}`, sub: "per person" },
+            ];
+
+            const percentage = Math.round((availableTickets / totalTickets) * 100);
+            const statusColor = percentage > 50 ? 'text-emerald-600 bg-emerald-50' : percentage > 20 ? 'text-amber-600 bg-amber-50' : 'text-red-600 bg-red-50';
+            const statusText = percentage > 50 ? 'Available' : percentage > 20 ? 'Filling Fast' : 'Almost Sold Out';
+
+            return (
+                <section id="details" className="py-24 md:py-32 bg-stone-100/50">
+                    <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 xl:px-20">
+                        {/* Section header */}
+                        <div className="text-center mb-16">
+                            <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-4">
+                                <span className="w-8 h-px bg-neutral-300"></span>
+                                Event Information
+                                <span className="w-8 h-px bg-neutral-300"></span>
+                            </span>
+                            <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight leading-tight">
+                                Everything you need to <span className="font-serif italic text-[#2a3557]">know</span>
+                            </h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Details Cards */}
+                            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {details.map((item, i) => (
+                                    <div key={i}
+                                         className="group bg-white rounded-2xl p-6 border border-neutral-200/60 hover:border-[#2a3557]/20 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                                        <div className="w-10 h-10 rounded-xl bg-stone-100 group-hover:bg-[#2a3557] flex items-center justify-center text-neutral-500 group-hover:text-white transition-all duration-300 mb-4">
+                                            {item.icon}
+                                        </div>
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-1">{item.label}</p>
+                                        <p className="text-lg font-semibold tracking-tight">{item.value}</p>
+                                        {item.sub && <p className="text-sm text-neutral-400 mt-0.5">{item.sub}</p>}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Ticket Availability Card */}
+                            <div className="bg-[#2a3557] rounded-2xl p-8 text-white flex flex-col justify-between">
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 mb-4">Ticket Availability</p>
+                                    <div className="flex items-end gap-2 mb-2">
+                                        <span className="text-6xl font-bold tracking-tight">{availableTickets}</span>
+                                        <span className="text-white/40 text-lg mb-2">/ {totalTickets}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <span className={`inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full ${statusColor}`}>
+                                            {statusText}
+                                        </span>
+                                    </div>
+                                    {/* Progress bar */}
+                                    <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden mb-2">
+                                        <div className="h-full bg-white rounded-full transition-all duration-700"
+                                             style={{ width: `${percentage}%` }}></div>
+                                    </div>
+                                    <p className="text-xs text-white/40">{percentage}% tickets remaining</p>
+                                </div>
+                                <div className="mt-8 pt-6 border-t border-white/10">
+                                    <a href="#booking"
+                                       className="w-full flex items-center justify-center gap-2 bg-white text-[#2a3557] text-sm font-semibold uppercase tracking-wide py-3.5 rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
+                                        Book Now
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        // ─── Input Field Component ────────────────────────────────
+        function InputField({ label, name, type = "text", placeholder, value, onChange, error, icon, hint }) {
+            return (
+                <div className="space-y-1.5">
+                    <label htmlFor={name} className="block text-xs font-bold uppercase tracking-[0.15em] text-neutral-500">
+                        {label} <span className="text-red-400">*</span>
+                    </label>
+                    <div className={`input-focus-ring flex items-center gap-3 bg-white border rounded-xl px-4 py-3.5 transition-all duration-300 ${error ? 'border-red-300 bg-red-50/30' : 'border-neutral-200 hover:border-neutral-300 focus-within:border-[#2a3557]'}`}>
+                        {icon && <span className="text-neutral-400 shrink-0">{icon}</span>}
+                        <input
+                            id={name}
+                            name={name}
+                            type={type}
+                            placeholder={placeholder}
+                            value={value}
+                            onChange={onChange}
+                            className="w-full bg-transparent outline-none text-sm text-neutral-900 placeholder:text-neutral-300"
+                        />
+                    </div>
+                    {hint && !error && <p className="text-xs text-neutral-400 pl-1">{hint}</p>}
+                    {error && (
+                        <p className="animate-slide-down flex items-center gap-1 text-xs text-red-500 pl-1">
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {error}
+                        </p>
+                    )}
+                </div>
+            );
+        }
+
+        // ─── Select Field Component ───────────────────────────────
+        function SelectField({ label, name, value, onChange, options, error, icon, placeholder }) {
+            return (
+                <div className="space-y-1.5">
+                    <label htmlFor={name} className="block text-xs font-bold uppercase tracking-[0.15em] text-neutral-500">
+                        {label} <span className="text-red-400">*</span>
+                    </label>
+                    <div className={`input-focus-ring flex items-center gap-3 bg-white border rounded-xl px-4 py-3.5 transition-all duration-300 ${error ? 'border-red-300 bg-red-50/30' : 'border-neutral-200 hover:border-neutral-300 focus-within:border-[#2a3557]'}`}>
+                        {icon && <span className="text-neutral-400 shrink-0">{icon}</span>}
+                        <select
+                            id={name}
+                            name={name}
+                            value={value}
+                            onChange={onChange}
+                            className="w-full bg-transparent outline-none text-sm text-neutral-900 appearance-none cursor-pointer"
+                        >
+                            <option value="" disabled>{placeholder || 'Select...'}</option>
+                            {options.map(opt => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                        </select>
+                        <svg className="w-4 h-4 text-neutral-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                    {error && (
+                        <p className="animate-slide-down flex items-center gap-1 text-xs text-red-500 pl-1">
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {error}
+                        </p>
+                    )}
+                </div>
+            );
+        }
+
+        // ─── Booking Form Component ───────────────────────────────
+        function BookingForm({ availableTickets, onBookingSuccess, showToast }) {
+            const [formData, setFormData] = useState({
+                name: '',
+                email: '',
+                department: '',
+                tickets: '',
+            });
+            const [errors, setErrors] = useState({});
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            const [touched, setTouched] = useState({});
+
+            const departments = [
+                { value: 'cse', label: 'Computer Science & Engineering' },
+                { value: 'ece', label: 'Electronics & Communication' },
+                { value: 'eee', label: 'Electrical & Electronics' },
+                { value: 'mech', label: 'Mechanical Engineering' },
+                { value: 'civil', label: 'Civil Engineering' },
+                { value: 'it', label: 'Information Technology' },
+                { value: 'aiml', label: 'AI & Machine Learning' },
+                { value: 'aids', label: 'AI & Data Science' },
+                { value: 'bba', label: 'Business Administration' },
+                { value: 'mba', label: 'MBA' },
+                { value: 'other', label: 'Other' },
+            ];
+
+            const validateField = useCallback((name, value) => {
+                switch (name) {
+                    case 'name':
+                        if (!value.trim()) return 'Name is required';
+                        if (value.trim().length < 2) return 'Name must be at least 2 characters';
+                        if (!/^[a-zA-Z\s.'-]+$/.test(value.trim())) return 'Name can only contain letters, spaces, dots, and hyphens';
+                        return '';
+                    case 'email':
+                        if (!value.trim()) return 'Email is required';
+                        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'Please enter a valid email address';
+                        return '';
+                    case 'department':
+                        if (!value) return 'Please select your department';
+                        return '';
+                    case 'tickets':
+                        if (!value && value !== 0) return 'Number of tickets is required';
+                        const num = parseInt(value);
+                        if (isNaN(num) || num < 1) return 'Please enter a positive number';
+                        if (!Number.isInteger(Number(value))) return 'Tickets must be a whole number';
+                        if (num > availableTickets) return `Only ${availableTickets} tickets available`;
+                        if (num > 10) return 'Maximum 10 tickets per booking';
+                        return '';
+                    default:
+                        return '';
+                }
+            }, [availableTickets]);
+
+            const handleChange = useCallback((e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({ ...prev, [name]: value }));
+
+                if (touched[name]) {
+                    const error = validateField(name, value);
+                    setErrors(prev => ({ ...prev, [name]: error }));
+                }
+            }, [touched, validateField]);
+
+            const handleBlur = useCallback((e) => {
+                const { name, value } = e.target;
+                setTouched(prev => ({ ...prev, [name]: true }));
+                const error = validateField(name, value);
+                setErrors(prev => ({ ...prev, [name]: error }));
+            }, [validateField]);
+
+            const validateAll = useCallback(() => {
+                const newErrors = {};
+                let isValid = true;
+
+                Object.keys(formData).forEach(key => {
+                    const error = validateField(key, formData[key]);
+                    if (error) {
+                        newErrors[key] = error;
+                        isValid = false;
+                    }
+                });
+
+                setErrors(newErrors);
+                setTouched({ name: true, email: true, department: true, tickets: true });
+                return isValid;
+            }, [formData, validateField]);
+
+            const handleSubmit = useCallback((e) => {
+                e.preventDefault();
+
+                if (availableTickets === 0) {
+                    showToast('Sorry, all tickets are sold out!', 'error');
+                    return;
+                }
+
+                if (!validateAll()) {
+                    showToast('Please fix the errors in the form', 'error');
+                    return;
+                }
+
+                setIsSubmitting(true);
+
+                // Simulate API call
+                setTimeout(() => {
+                    const bookingData = {
+                        name: formData.name.trim(),
+                        email: formData.email.trim(),
+                        department: departments.find(d => d.value === formData.department)?.label,
+                        tickets: parseInt(formData.tickets),
+                        totalAmount: parseInt(formData.tickets) * EVENT_DATA.price,
+                        bookingId: 'TNV-' + Date.now().toString(36).toUpperCase(),
+                        timestamp: new Date().toLocaleString('en-IN', {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                        }),
+                    };
+                    setIsSubmitting(false);
+                    onBookingSuccess(bookingData);
+                    showToast('Booking confirmed successfully!', 'success');
+                }, 1200);
+            }, [availableTickets, formData, validateAll, departments, onBookingSuccess, showToast]);
+
+            const handleReset = useCallback(() => {
+                setFormData({ name: '', email: '', department: '', tickets: '' });
+                setErrors({});
+                setTouched({});
+            }, []);
+
+            const ticketCount = parseInt(formData.tickets) || 0;
+            const totalAmount = ticketCount * EVENT_DATA.price;
+
+            const isSoldOut = availableTickets === 0;
+
+            return (
+                <section id="booking" className="py-24 md:py-32 bg-white">
+                    <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 xl:px-20">
+                        {/* Section header */}
+                        <div className="text-center mb-16">
+                            <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-4">
+                                <span className="w-8 h-px bg-neutral-300"></span>
+                                Reserve Your Spot
+                                <span className="w-8 h-px bg-neutral-300"></span>
+                            </span>
+                            <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight leading-tight">
+                                Book your <span className="font-serif italic text-[#2a3557]">tickets</span>
+                            </h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 max-w-6xl mx-auto">
+                            {/* Form */}
+                            <div className="lg:col-span-3">
+                                <div className="bg-stone-100/50 rounded-2xl p-6 sm:p-8 border border-neutral-200/60">
+                                    {isSoldOut ? (
+                                        <div className="text-center py-16">
+                                            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                                </svg>
+                                            </div>
+                                            <h3 className="text-xl font-semibold mb-2">Sold Out!</h3>
+                                            <p className="text-neutral-500 text-sm">All tickets for {EVENT_DATA.name} have been booked.</p>
+                                        </div>
+                                    ) : (
+                                        <form onSubmit={handleSubmit} noValidate>
+                                            <div className="space-y-5">
+                                                <InputField
+                                                    label="Full Name"
+                                                    name="name"
+                                                    placeholder="Enter your full name"
+                                                    value={formData.name}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    error={touched.name ? errors.name : ''}
+                                                    icon={
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                                        </svg>
+                                                    }
+                                                />
+
+                                                <InputField
+                                                    label="Email Address"
+                                                    name="email"
+                                                    type="email"
+                                                    placeholder="you@university.edu"
+                                                    value={formData.email}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    error={touched.email ? errors.email : ''}
+                                                    hint="We'll send the confirmation to this email"
+                                                    icon={
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                                        </svg>
+                                                    }
+                                                />
+
+                                                <SelectField
+                                                    label="Department"
+                                                    name="department"
+                                                    value={formData.department}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    options={departments}
+                                                    error={touched.department ? errors.department : ''}
+                                                    placeholder="Select your department"
+                                                    icon={
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                                        </svg>
+                                                    }
+                                                />
+
+                                                <InputField
+                                                    label="Number of Tickets"
+                                                    name="tickets"
+                                                    type="number"
+                                                    placeholder={`1 – ${Math.min(availableTickets, 10)}`}
+                                                    value={formData.tickets}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    error={touched.tickets ? errors.tickets : ''}
+                                                    hint={`Max ${Math.min(availableTickets, 10)} tickets per booking`}
+                                                    icon={
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+                                                        </svg>
+                                                    }
+                                                />
+                                            </div>
+
+                                            <div className="flex flex-col sm:flex-row gap-3 mt-8">
+                                                <button
+                                                    type="submit"
+                                                    disabled={isSubmitting}
+                                                    className="flex-1 flex items-center justify-center gap-2 bg-[#2a3557] hover:bg-[#1e2a4a] disabled:bg-neutral-300 text-white text-sm font-semibold uppercase tracking-wide py-4 px-8 rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-lg disabled:hover:scale-100 disabled:cursor-not-allowed">
+                                                    {isSubmitting ? (
+                                                        <>
+                                                            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                                            </svg>
+                                                            Processing...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            Confirm Booking — ₹{totalAmount || EVENT_DATA.price}
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/>
+                                                            </svg>
+                                                        </>
+                                                    )}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleReset}
+                                                    className="sm:w-auto flex items-center justify-center gap-2 border border-neutral-200 text-neutral-600 hover:text-neutral-900 hover:border-neutral-300 text-sm font-medium py-4 px-6 rounded-xl transition-all duration-300">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                                    </svg>
+                                                    Reset
+                                                </button>
+                                            </div>
+                                        </form>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Summary Sidebar */}
+                            <div className="lg:col-span-2">
+                                <div className="sticky top-28 space-y-4">
+                                    {/* Event summary */}
+                                    <div className="bg-[#2a3557] rounded-2xl overflow-hidden">
+                                        <div className="relative h-36 overflow-hidden">
+                                            <img src="https://picsum.photos/seed/eventcard/800/400.jpg" alt="Event"
+                                                 className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-[#2a3557] via-transparent to-transparent"></div>
+                                            <div className="absolute bottom-3 left-4 right-4">
+                                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">{EVENT_DATA.subtitle}</p>
+                                                <h3 className="text-white font-semibold text-lg tracking-tight">{EVENT_DATA.name}</h3>
+                                            </div>
+                                        </div>
+                                        <div className="p-5 space-y-3">
+                                            <div className="flex items-center gap-3 text-sm text-white/70">
+                                                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                                </svg>
+                                                {EVENT_DATA.date} • {EVENT_DATA.time}
+                                            </div>
+                                            <div className="flex items-center gap-3 text-sm text-white/70">
+                                                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                </svg>
+                                                {EVENT_DATA.venue}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Price breakdown */}
+                                    <div className="bg-white rounded-2xl p-6 border border-neutral-200/60">
+                                        <p className="text-xs font-bold uppercase tracking-[0.15em] text-neutral-400 mb-4">Price Summary</p>
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-neutral-500">Price per ticket</span>
+                                                <span className="font-medium">₹{EVENT_DATA.price}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-neutral-500">Tickets</span>
+                                                <span className="font-medium">{ticketCount || '—'}</span>
+                                            </div>
+                                            <div className="ticket-divider my-3"></div>
+                                            <div className="flex justify-between">
+                                                <span className="font-semibold">Total</span>
+                                                <span className="text-xl font-bold tracking-tight text-[#2a3557]">
+                                                    ₹{totalAmount.toLocaleString('en-IN') || '—'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Trust signals */}
+                                    <div className="flex items-center gap-3 text-xs text-neutral-400 px-2">
+                                        <svg className="w-4 h-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                        </svg>
+                                        <span>Secure booking • Instant confirmation</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        // ─── Booking Confirmation Component ───────────────────────
+        function BookingConfirmation({ booking, onBookAgain }) {
+            const [showConfetti, setShowConfetti] = useState(true);
+            const confettiColors = ['#2a3557', '#16a34a', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+
+            useEffect(() => {
+                const timer = setTimeout(() => setShowConfetti(false), 2000);
+                return () => clearTimeout(timer);
+            }, []);
+
+            return (
+                <section className="py-24 md:py-32 bg-white">
+                    <div className="max-w-2xl mx-auto px-6">
+                        <div className="animate-scale-in relative bg-stone-100/50 rounded-3xl overflow-hidden border border-neutral-200/60">
+                            {/* Confetti */}
+                            {showConfetti && (
+                                <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+                                    {Array.from({ length: 30 }).map((_, i) => (
+                                        <div
+                                            key={i}
+                                            className="confetti-piece"
+                                            style={{
+                                                left: `${Math.random() * 100}%`,
+                                                top: `${Math.random() * 40}%`,
+                                                backgroundColor: confettiColors[i % confettiColors.length],
+                                                animationDelay: `${Math.random() * 0.5}s`,
+                                                animationDuration: `${1 + Math.random() * 1}s`,
+                                                transform: `rotate(${Math.random() * 360}deg)`,
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Success header */}
+                            <div className="bg-[#2a3557] p-8 text-center text-white relative">
+                                <div className="relative inline-flex">
+                                    <div className="absolute inset-0 rounded-full bg-emerald-400/30 animate-[pulse-ring_1.5s_ease-out]"></div>
+                                    <div className="relative w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center">
+                                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <h3 className="text-2xl font-semibold mt-4 tracking-tight">Booking Confirmed!</h3>
+                                <p className="text-white/60 text-sm mt-1">Your tickets have been reserved successfully</p>
+                            </div>
+
+                            {/* Ticket body */}
+                            <div className="p-8">
+                                <div className="flex items-center justify-between mb-6">
+                                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">Booking ID</span>
+                                    <span className="font-mono text-sm font-semibold text-[#2a3557] bg-[#2a3557]/5 px-3 py-1 rounded-lg">{booking.bookingId}</span>
+                                </div>
+
+                                <div className="ticket-divider mb-6"></div>
+
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-start py-2 border-b border-neutral-100">
+                                        <span className="text-xs font-bold uppercase tracking-[0.15em] text-neutral-400">Event</span>
+                                        <span className="text-sm font-semibold text-right">{EVENT_DATA.name}</span>
+                                    </div>
+                                    <div className="flex justify-between items-start py-2 border-b border-neutral-100">
+                                        <span className="text-xs font-bold uppercase tracking-[0.15em] text-neutral-400">Name</span>
+                                        <span className="text-sm font-medium text-right">{booking.name}</span>
+                                    </div>
+                                    <div className="flex justify-between items-start py-2 border-b border-neutral-100">
+                                        <span className="text-xs font-bold uppercase tracking-[0.15em] text-neutral-400">Email</span>
+                                        <span className="text-sm font-medium text-right">{booking.email}</span>
+                                    </div>
+                                    <div className="flex justify-between items-start py-2 border-b border-neutral-100">
+                                        <span className="text-xs font-bold uppercase tracking-[0.15em] text-neutral-400">Department</span>
+                                        <span className="text-sm font-medium text-right">{booking.department}</span>
+                                    </div>
+                                    <div className="flex justify-between items-start py-2 border-b border-neutral-100">
+                                        <span className="text-xs font-bold uppercase tracking-[0.15em] text-neutral-400">Tickets</span>
+                                        <span className="text-sm font-semibold text-right">{booking.tickets} × ₹{EVENT_DATA.price}</span>
+                                    </div>
+                                    <div className="flex justify-between items-start py-2">
+                                        <span className="text-xs font-bold uppercase tracking-[0.15em] text-neutral-400">Total Amount</span>
+                                        <span className="text-xl font-bold text-[#2a3557]">₹{booking.totalAmount.toLocaleString('en-IN')}</span>
+                                    </div>
+                                </div>
+
+                                <div className="ticket-divider my-6"></div>
+
+                                <div className="flex items-center gap-2 text-xs text-neutral-400 mb-8">
+                                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Booked on {booking.timestamp}
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <button
+                                        onClick={onBookAgain}
+                                        className="flex-1 flex items-center justify-center gap-2 bg-[#2a3557] hover:bg-[#1e2a4a] text-white text-sm font-semibold uppercase tracking-wide py-3.5 px-6 rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                        </svg>
+                                        Book More Tickets
+                                    </button>
+                                </div>
+
+                                <p className="text-xs text-neutral-400 text-center mt-4">
+                                    A confirmation email has been sent to <span className="font-medium text-neutral-600">{booking.email}</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        // ─── Footer Component ─────────────────────────────────────
+        function Footer() {
+            return (
+                <footer className="bg-[#2a3557] text-white py-16">
+                    <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 xl:px-20">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
+                            <div>
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center">
+                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+                                        </svg>
+                                    </div>
+                                    <span className="text-lg font-bold tracking-tight">EventPulse</span>
+                                </div>
+                                <p className="text-white/50 text-sm leading-relaxed max-w-xs">
+                                    Simplifying event ticketing for internal department events. Built with React JS.
+                                </p>
+                            </div>
+                            <div>
+                                <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-4">Event Details</h4>
+                                <ul className="space-y-2 text-sm text-white/60">
+                                    <li>{EVENT_DATA.name}</li>
+                                    <li>{EVENT_DATA.date}</li>
+                                    <li>{EVENT_DATA.venue}</li>
+                                    <li>{EVENT_DATA.department}</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-4">Project Info</h4>
+                                <ul className="space-y-2 text-sm text-white/60">
+                                    <li>Project - 1: Ticket Booking System</li>
+                                    <li>Built with React JS</li>
+                                    <li>Functional Components & Hooks</li>
+                                    <li>Form Validation & State Management</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <p className="text-xs text-white/30">© 2025 EventPulse. Academic Project — CSE Department.</p>
+                            <p className="text-xs text-white/30">React JS • Tailwind CSS • Single Page Application</p>
+                        </div>
+                    </div>
+                </footer>
+            );
+        }
+
+        // ─── Main App Component ───────────────────────────────────
+        function App() {
+            const [availableTickets, setAvailableTickets] = useState(EVENT_DATA.totalTickets);
+            const [currentBooking, setCurrentBooking] = useState(null);
+            const [toast, setToast] = useState(null);
+            const [ticketPulse, setTicketPulse] = useState(false);
+
+            const showToast = useCallback((message, type) => {
+                setToast({ message, type, key: Date.now() });
+            }, []);
+
+            const handleBookingSuccess = useCallback((bookingData) => {
+                setCurrentBooking(bookingData);
+                setAvailableTickets(prev => prev - bookingData.tickets);
+                setTicketPulse(true);
+                setTimeout(() => setTicketPulse(false), 500);
+            }, []);
+
+            const handleBookAgain = useCallback(() => {
+                setCurrentBooking(null);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, []);
+
+            return (
+                <div className="min-h-screen">
+                    {/* Toast */}
+                    {toast && (
+                        <Toast
+                            key={toast.key}
+                            message={toast.message}
+                            type={toast.type}
+                            onClose={() => setToast(null)}
+                        />
+                    )}
+
+                    <Navbar
+                        availableTickets={availableTickets}
+                        totalTickets={EVENT_DATA.totalTickets}
+                    />
+
+                    <HeroSection />
+
+                    <EventDetails
+                        availableTickets={availableTickets}
+                        totalTickets={EVENT_DATA.totalTickets}
+                    />
+
+                    {!currentBooking ? (
+                        <BookingForm
+                            availableTickets={availableTickets}
+                            onBookingSuccess={handleBookingSuccess}
+                            showToast={showToast}
+                        />
+                    ) : (
+                        <BookingConfirmation
+                            booking={currentBooking}
+                            onBookAgain={handleBookAgain}
+                        />
+                    )}
+
+                    <Footer />
+                </div>
+            );
+        }
+
+        // ─── Render ───────────────────────────────────────────────
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
